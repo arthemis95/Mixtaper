@@ -92,7 +92,7 @@ class MixtapeApp:
 
          # Playback progress 
         self.progress_frame = ttk.Frame(self.root)
-        self.progress_frame.grid(row=8, column=0, columnspan=4, padx=5, pady=5, sticky="nsew")
+        self.progress_frame.grid(row=8, column=0, columnspan=8, padx=5, pady=5, sticky="nsew")
 
         # Configurable playback progress label
         self.progress_label = ttk.Label(self.progress_frame, text="Playing: [Nothing is playing]")  # Configurable text
@@ -101,6 +101,14 @@ class MixtapeApp:
         # Progress bar itself
         self.progress_bar = ttk.Progressbar(self.progress_frame, length=400, mode="determinate")
         self.progress_bar.grid(row=1, column=0, columnspan=4, padx=5, pady=5, sticky="we")
+
+        # Configurable playback progress label
+        self.total_progress_label = ttk.Label(self.progress_frame, text="Total Progress")  # Configurable text
+        self.total_progress_label.grid(row=0, column=5, columnspan=4, sticky="w", padx=5, pady=(5, 0))
+
+        # Total progress
+        self.total_progress_bar = ttk.Progressbar(self.progress_frame, length=400, mode="determinate")
+        self.total_progress_bar.grid(row=1, column=5, columnspan=4, padx=5, pady=5, sticky="we")
 
         # Playback controls
         ttk.Button(self.root, text="Play Side A", command=lambda: self.play_mixtape("A")).grid(row=7, column=0, padx=5, pady=5)
@@ -279,6 +287,11 @@ class MixtapeApp:
         self.stop_playback()  # Stop any ongoing playback
         self.playback_active = True
 
+        total_time = 0
+        current_time = 0
+        for song in playlist:
+            total_time += song['duration']
+        
         for song in playlist:
             mixer.music.load(song['path'])
             mixer.music.play()
@@ -286,15 +299,19 @@ class MixtapeApp:
                 if(self.playback_active):
                     self.progress_label.configure(text="Playing: {} {}/{}".format(os.path.split(song['path'])[1], self.format_time(mixer.music.get_pos() / 1000), self.format_time(song['duration'])))
                     self.progress_bar["value"] = 100 * (mixer.music.get_pos() / 1000) / song['duration']
+                    self.total_progress_bar["value"] = 100 * (current_time + mixer.music.get_pos() / 1000) / total_time
                     continue
                 else:
                     self.progress_label.configure(text="Playing: [Nothing is playing]")
                     self.progress_bar["value"] = 0
+                    self.total_progress_bar["value"] = 0
                     break
             if(not self.playback_active):
                 self.progress_label.configure(text="Playing: [Nothing is playing]")
                 self.progress_bar["value"] = 0
+                self.total_progress_bar["value"] = 0
                 break
+            current_time += song['duration']
 
     def stop_playback(self):
         self.playback_active = False
