@@ -4,7 +4,10 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from pygame import mixer
 from mutagen.mp3 import MP3
+from mutagen.wave import WAVE
+from mutagen.flac import FLAC
 import threading
+import shutil
 
 class MixtapeApp:
     def __init__(self, root):
@@ -48,6 +51,7 @@ class MixtapeApp:
         ttk.Button(self.root, text="New Mixtape", command=self.new_mixtape).grid(row=1, column=1, padx=5, pady=5)
         ttk.Button(self.root, text="Save Mixtape", command=self.save_mixtape).grid(row=1, column=2, padx=5, pady=5)
         ttk.Button(self.root, text="Load Mixtape", command=self.load_mixtape).grid(row=1, column=3, padx=5, pady=5)
+        ttk.Button(self.root, text="Export Mixtape", command=self.export_mixtape).grid(row=0, column=3, padx=5, pady=5)
 
         # Search bar
         ttk.Label(self.root, text="Search:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
@@ -151,15 +155,20 @@ class MixtapeApp:
         self.library_tree.delete(*self.library_tree.get_children())
 
         loading_label = ttk.Label(self.root, text="Loading... Please wait")
-        loading_label.grid(row=8, column=0, columnspan=4, pady=10)
+        loading_label.grid(row=9, column=1, columnspan=4, pady=10)
         self.root.update()
 
         for root, _, files in os.walk(folder):
             for file in files:
-                if file.endswith(".mp3"):
+                if file.endswith(".mp3") or file.endswith(".wav") or file.endswith(".flac"):
                     try:
                         filepath = os.path.join(root, file)
-                        audio = MP3(filepath)
+                        if file.endswith(".mp3"):
+                            audio = MP3(filepath)
+                        if file.endswith(".wav"):
+                            audio = WAVE(filepath)
+                        if file.endswith(".flac"):
+                            audio = FLAC(filepath)
                         duration = audio.info.length
                         song_info = {"path": filepath, "name": file, "duration": duration}
                         self.library.append(song_info)
@@ -189,6 +198,16 @@ class MixtapeApp:
             json.dump(self.mixtape, f)
 
         messagebox.showinfo("Save Mixtape", "Mixtape saved successfully!")
+
+    def export_mixtape(self):
+        path = filedialog.askdirectory()
+        self.save_mixtape()
+
+        for side in ["A", "B"]:
+            for index, song in enumerate(self.mixtape[side]):
+                shutil.copyfile(os.path.normpath(song['path']), os.path.join(path, "{}{} {}".format(side, index + 1, song['name'])))
+        messagebox.showinfo("Export Mixtape", "Mixtape exported successfully!")
+                
 
     def load_mixtape(self):
         filepath = filedialog.askopenfilename(filetypes=[("JSON files", "*.json")])
