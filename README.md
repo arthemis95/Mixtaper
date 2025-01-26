@@ -45,7 +45,7 @@ A: If I knew about `[tool xyz]`, I wouldn't have made this.
 ### Q: A toggle between a 70µs and 120µs EQ would be really nice! Is that something you can implement?
 A: I might, if you ask nicely.
 
-### Q: This GUI is so atrocious it gave made my eyes bleed.
+### Q: This GUI is so atrocious it made my eyes bleed.
 A: That's not a question. 
 
 
