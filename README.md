@@ -1,4 +1,4 @@
-# Cassette Mixtape Tool  
+# Mixtaper 
 
 A shitty, cobbled together application to create mixtapes. I've done way too many of these
 be happy with regular playlists. Very barebones GUI not withstanding (I avoid them whenever possible), this has made my personal experience creating mixtapes more enjoyable, therefore I want to share it.
