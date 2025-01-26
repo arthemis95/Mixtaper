@@ -42,7 +42,7 @@ class MixtapeApp:
         ttk.Label(self.root, text="Tape Length (minutes):").grid(row=0, column=0, padx=5, pady=5)
         self.tape_length_var = tk.IntVar(value=60)
         ttk.Combobox(
-            self.root, textvariable=self.tape_length_var, values=[30, 60, 90], state="readonly"
+            self.root, textvariable=self.tape_length_var, values=[30, 60, 90, 120], state="readonly"
         ).grid(row=0, column=1, padx=5, pady=5)
         ttk.Button(self.root, text="Set", command=self.set_tape_length).grid(row=0, column=2, padx=5, pady=5)
 
