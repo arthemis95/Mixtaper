@@ -8,7 +8,8 @@ be happy with regular playlists. Very barebones GUI not withstanding (I avoid th
 - **Library Management:** Load, search, and organize audio files (MP3, WAV, FLAC).  
 - **Mixtape Creation:** Add, reorder, or remove songs for Side A and Side B.  
 - **Playback:** Preview each side of the mixtape directly in the app.  
-- **Export:** Save mixtape playlists or export the songs to a folder.  
+- **Export:** Save mixtape playlists or export the songs to a folder.
+- **Auto Balance Sides:** Need help balancing both sides of the tape? We can brute force that!
 
 ## Requirements  
 - Python 3.x  
