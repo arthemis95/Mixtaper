@@ -5,11 +5,11 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.12'
     - name: Install dependencies
       run: |
         pip install pygame mutagen pyinstaller
@@ -17,7 +17,7 @@ jobs:
       run: |
         pyinstaller --onefile --distpath ./ --name Mixtaper.exe mixtaper.py
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: MixtapeTool
         path: Mixtaper.exe
