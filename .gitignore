@@ -2,3 +2,4 @@ library.json
 *.spec
 build/**
 dist/**
+.vscode/**

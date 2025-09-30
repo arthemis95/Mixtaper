@@ -8,6 +8,7 @@ from mutagen.wave import WAVE
 from mutagen.flac import FLAC
 import threading
 import shutil
+import random
 
 class MixtapeApp:
     def __init__(self, root):
@@ -75,8 +76,13 @@ class MixtapeApp:
         self.library_tree.configure(yscrollcommand=library_scrollbar.set)
         library_scrollbar.pack(side="right", fill="y")
 
-        ttk.Button(self.root, text="Add to Side A", command=lambda: self.add_to_mixtape("A")).grid(row=5, column=0, padx=5, pady=5)
-        ttk.Button(self.root, text="Add to Side B", command=lambda: self.add_to_mixtape("B")).grid(row=5, column=1, padx=5, pady=5)
+        # Button frame for library actions 
+        button_frame = ttk.Frame(self.root)
+        button_frame.grid(row=5, column=0, columnspan=2, padx=5, pady=5)
+
+        ttk.Button(button_frame, text="Add to Side A", command=lambda: self.add_to_mixtape("A")).pack(side="left", padx=50)
+        ttk.Button(button_frame, text="Add to Side B", command=lambda: self.add_to_mixtape("B")).pack(side="left", padx=50)
+        ttk.Button(button_frame, text="Autobalance Sides", command=self.auto_balance).pack(side="left", padx=50)
 
         # Mixtape lists for sides A and B
         self.create_mixtape_side_ui("A", 2)
@@ -229,34 +235,49 @@ class MixtapeApp:
 
         self.update_usage()
 
-    def add_to_mixtape(self, side):
-        selected = self.library_tree.selection()
-        if not selected:
-            return
+    def add_to_mixtape(self, side, song=None, supressWarning=False):
 
-        for item in selected:
-            song_index = self.library_tree.item(item, "values")
-            song = next((s for s in self.library if s["name"] == song_index[0]), None)
-            if not song:
-                continue
+        if song == None:
+            selected = self.library_tree.selection()
+            if selected == None:
+                return
+            for item in selected:
+                song_index = self.library_tree.item(item, "values")
+                song = next((s for s in self.library if s["name"] == song_index[0]), None)
+                if song == None:
+                    continue
 
+                self.mixtape[side].append(song)
+                listbox = self.side_a_listbox if side == "A" else self.side_b_listbox
+                listbox.insert(tk.END, f"{song['name']} ({self.format_time(song['duration'])})")
+                self.current_usage[side] += song['duration']
+        else:
             self.mixtape[side].append(song)
             listbox = self.side_a_listbox if side == "A" else self.side_b_listbox
             listbox.insert(tk.END, f"{song['name']} ({self.format_time(song['duration'])})")
             self.current_usage[side] += song['duration']
 
-        if self.current_usage[side] > self.tape_length:
+        if self.current_usage[side] > self.tape_length and supressWarning == False:
             messagebox.showwarning("Tape Full", f"Side {side} exceeds the maximum tape length!")
         self.update_usage()
 
-    def remove_from_mixtape(self, side):
+    def remove_from_mixtape(self, side, song=None):
         listbox = self.side_a_listbox if side == "A" else self.side_b_listbox
-        selection = listbox.curselection()
-        if not selection:
+
+        index = None
+
+        if song == None:
+            selected = listbox.curselection()
+            if len(selected) == 0:
+                return
+            index = selected[0]
+            song = self.mixtape[side][index]
+        else:
+            index = self.mixtape[side].index(song)
+        
+        if song == None:
             return
 
-        index = selection[0]
-        song = self.mixtape[side][index]
         self.current_usage[side] -= song['duration']
         del self.mixtape[side][index]
         listbox.delete(index)
@@ -264,11 +285,11 @@ class MixtapeApp:
 
     def move_song(self, side, direction):
         listbox = self.side_a_listbox if side == "A" else self.side_b_listbox
-        selection = listbox.curselection()
-        if not selection:
+        selected = listbox.curselection()
+        if not selected:
             return
 
-        index = selection[0]
+        index = selected[0]
         new_index = index + direction
         if new_index < 0 or new_index >= len(self.mixtape[side]):
             return
@@ -362,6 +383,53 @@ class MixtapeApp:
         self.usage_label_a.config(text=f"Side A Usage: {formatted_time_a} / {side_a_max}")
         self.usage_label_b.config(text=f"Side B Usage: {formatted_time_b} / {side_b_max}")
 
+    def auto_balance(self):
+        totalList = []
+
+        for side in self.mixtape:
+            listbox = self.side_a_listbox if side == "A" else self.side_b_listbox 
+            initialLength = len(self.mixtape[side])
+            for index in range(initialLength):
+                reverse_index = initialLength -1 - index
+                song = self.mixtape[side][reverse_index]
+                totalList.append(song)
+                self.remove_from_mixtape(side, song)
+
+
+        dur_a = 0
+        dur_b = 0
+        best_ratio = 0.5
+        best_list = []
+        iter = 0
+        while(True):
+            newList = []
+            for song in totalList:
+                if dur_a < dur_b:
+                    dur_a += song['duration']
+                    newList.append(['A', song])
+                else:
+                    dur_b += song['duration']
+                    newList.append(['B', song])
+            ratio = dur_a / dur_b
+            if(abs(ratio - 1) < abs(best_ratio - 1)):
+                best_ratio = ratio
+                best_list = []
+                for entry in newList:
+                    best_list.append(entry)
+
+            if (0.99995 > ratio or ratio > 1.00005) and iter < 1000:
+                dur_a = 0
+                dur_b = 0
+                iter += 1
+                newList = []
+                random.shuffle(totalList)
+                continue
+            else:
+                break
+
+        for entry in best_list:
+            self.add_to_mixtape(entry[0], entry[1], supressWarning=True)
+    
     @staticmethod
     def format_time(seconds):
         minutes = int(seconds // 60)
