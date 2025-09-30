@@ -1,0 +1,23 @@
+name: Build Windows EXE
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+    - name: Install dependencies
+      run: |
+        pip install pygame mutagen pyinstaller
+    - name: Build EXE
+      run: |
+        pyinstaller --onefile --distpath ./ --name Mixtaper.exe mixtaper.py
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: MixtapeTool
+        path: Mixtaper.exe
