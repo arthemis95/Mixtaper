@@ -10,6 +10,7 @@ import threading
 import shutil
 import random
 import time
+from decimal import Decimal
 
 class MixtapeApp:
     def __init__(self, root):
@@ -335,7 +336,8 @@ class MixtapeApp:
                             "path": filepath, 
                             "name": file, 
                             "duration": duration,
-                            "folder": root_dir  # Store full path for reference
+                            "folder": root_dir,  # Store full path for reference
+                            "is_silence": False
                         }
                         self.library.append(song_info)
                         all_songs.append(song_info)
@@ -686,6 +688,9 @@ class MixtapeApp:
                 progress_bar["style"] = "Yellow.Horizontal.TProgressbar"
             else:
                 progress_bar["style"] = "Red.Horizontal.TProgressbar"
+
+        self.current_usage["A"] = round(self.current_usage["A"], 3)
+        self.current_usage["B"] = round(self.current_usage["B"], 3)
 
         formatted_time_a = self.format_time(self.current_usage["A"])
         formatted_time_b = self.format_time(self.current_usage["B"])
