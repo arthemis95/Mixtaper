@@ -34,4 +34,4 @@ jobs:
         git stash apply
         git add Mixtaper.exe
         git commit -m "Build EXE for ${{ github.ref_name }}"
-        git push
+        git push origin HEAD:main
