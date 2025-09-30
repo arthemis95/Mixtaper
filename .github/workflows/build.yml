@@ -27,11 +27,11 @@ jobs:
         
     - name: Commit EXE to repository
       run: |
-        git stash
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git checkout main
+        git stash
+        git checkout main  # Ensure we're on main branch
         git stash apply
         git add Mixtaper.exe
-        git commit -m "Build EXE for ${{ github.ref_name }}" || echo "No changes to commit"
+        git commit -m "Build EXE for ${{ github.ref_name }}"
         git push
