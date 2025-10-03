@@ -569,26 +569,71 @@ class MixtapeApp:
 
     def filter_library(self, *args):
         search_term = self.search_var.get().lower()
-
+    
         if not search_term:
-            # If no search term, restore full hierarchy
+            # Restore full hierarchical structure when search is cleared
             self.library_tree.delete(*self.library_tree.get_children())
-            # We'd need to rebuild from self.library, but for simplicity,
-            # let's just reload the library when search is cleared
+            
+            # Rebuild the folder hierarchy from the original library
             if hasattr(self, '_original_library'):
-                self.library_tree.delete(*self.library_tree.get_children())
+                folder_nodes = {}
+                
                 for song in self._original_library:
-                    # Rebuild logic would go here
-                    pass
+                    # Get relative path from library root
+                    if self.library_root and 'folder' in song:
+                        full_folder_path = song['folder']
+                        try:
+                            if full_folder_path.startswith(self.library_root):
+                                relative_path = os.path.relpath(full_folder_path, self.library_root)
+                            else:
+                                relative_path = os.path.basename(full_folder_path)
+                        except:
+                            relative_path = os.path.basename(full_folder_path)
+                    else:
+                        relative_path = os.path.basename(os.path.dirname(song['path']))
+                    
+                    if relative_path == '.':
+                        relative_path = os.path.basename(self.library_root) if self.library_root else "Music"
+                    
+                    folder_parts = relative_path.split(os.sep)
+                    current_parent = ""
+                    
+                    # Build folder hierarchy
+                    for i, part in enumerate(folder_parts):
+                        parent_path = os.sep.join(folder_parts[:i])
+                        current_path = os.sep.join(folder_parts[:i+1])
+                        
+                        if current_path not in folder_nodes:
+                            if i == 0:
+                                node = self.library_tree.insert("", "end", text=part, values=("", ""))
+                            else:
+                                parent_node = folder_nodes[parent_path]
+                                node = self.library_tree.insert(parent_node, "end", text=part, values=("", ""))
+                            folder_nodes[current_path] = node
+                    
+                    # Add song to folder
+                    parent_node = folder_nodes.get(relative_path, "")
+                    if parent_node:
+                        self.library_tree.insert(
+                            parent_node, "end", 
+                            text="",
+                            values=(song['name'], self.format_time(song['duration'])),
+                            tags=("song",)
+                        )
+                
+                self.library_tree.tag_configure("song", foreground="black")
+                # Expand first level folders
+                for child in self.library_tree.get_children():
+                    self.library_tree.item(child, open=False)
             return
-
+    
         # Store original library if first search
         if not hasattr(self, '_original_library'):
             self._original_library = self.library.copy()
-
-        # Clear and show only matching songs
+    
+        # Clear and show only matching songs in a flat list during search
         self.library_tree.delete(*self.library_tree.get_children())
-
+    
         for song in self._original_library:
             if search_term in song['name'].lower():
                 # Show matching songs in a flat list during search
